@@ -1,8 +1,11 @@
 package controllers
 
 import (
-	"bitbucket.org/fseros/sinker_registry_api/models"
 	"encoding/json"
+
+	"fmt"
+
+	"bitbucket.org/fseros/sinker_registry_api/models"
 	log "github.com/Sirupsen/logrus"
 	"github.com/astaxie/beego"
 )
@@ -22,7 +25,7 @@ func (c *ProbeController) URLMapping() {
 
 // @Title Create Probe
 // @Description create new probe
-// @Success 200 {object} models.Probe
+// @Success 201 {object} models.Probe
 // @Param  fqdn  body string true "fqdn address of the probe"
 // @Param  ipv4  body string true "ipv4 address of the probe"
 // @Param  ipv6  body string false "ipv6 address of the probe"
@@ -35,10 +38,20 @@ func (c *ProbeController) URLMapping() {
 // @router / [post]
 func (p *ProbeController) Post() {
 	var pr models.Probe
+	pr.SetDefaults()
+
 	json.Unmarshal(p.Ctx.Input.RequestBody, &pr)
 	log.Info("%v", pr)
-	probeid := models.AddOne(pr)
+	probeid, err := models.AddOne(pr)
+	if err != nil {
+		p.Data["json"] = err.Error()
+		p.Ctx.Output.SetStatus(400)
+		p.ServeJSON()
+		return
+	}
+
 	p.Data["json"] = map[string]string{"ProbeId": probeid}
+	p.Ctx.Output.SetStatus(201)
 	p.ServeJSON()
 }
 
@@ -60,6 +73,31 @@ func (p *ProbeController) Get() {
 func (p *ProbeController) GetAll() {
 	obs := models.GetAll()
 	p.Data["json"] = obs
+	p.ServeJSON()
+}
+
+// @router /ip/:ip [get]
+func (p *ProbeController) GetByIP() {
+	probeIP := p.Ctx.Input.Param(":id")
+	if probeIP != "" {
+		obs, err := models.GetByIPv4(probeIP)
+		fmt.Printf("%+v", obs)
+		if err != nil {
+			newobs := make([]models.Probe, len(obs))
+			for _, ob := range obs {
+				if ob.Enabled {
+					newobs = append(newobs, ob)
+				}
+			}
+			p.Data["json"] = newobs
+		} else {
+			p.Data["json"] = err
+			p.Ctx.Output.SetStatus(500)
+			p.ServeJSON()
+			return
+		}
+
+	}
 	p.ServeJSON()
 }
 

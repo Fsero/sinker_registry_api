@@ -1,0 +1,46 @@
+hash: a9f32d1a0b8ed7f3b79492ab88c7b98ecdf576aab21b560e8ddf1835710a58c6
+updated: 2017-05-01T17:27:12.10578055+02:00
+imports:
+- name: github.com/asaskevich/govalidator
+  version: 4918b99a7cb949bb295f3c7bbaf24b577d806e35
+- name: github.com/astaxie/beego
+  version: 7452151beec2f43c42122fd91b7523bcbccf05be
+  subpackages:
+  - config
+  - context
+  - grace
+  - logs
+  - orm
+  - session
+  - toolbox
+  - utils
+- name: github.com/mattn/go-sqlite3
+  version: ca5e3819723d8eeaf170ad510e7da1d6d2e94a08
+- name: github.com/Sirupsen/logrus
+  version: ba1b36c82c5e05c4f912a88eab0dcd91a171688f
+- name: golang.org/x/net
+  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
+  subpackages:
+  - context
+- name: golang.org/x/sys
+  version: 002cbb5f952456d0c50e0d2aff17ea5eca716979
+  subpackages:
+  - unix
+testImports:
+- name: github.com/gopherjs/gopherjs
+  version: 9659c814f1d54d63f9c623449a7111d3864c1361
+  subpackages:
+  - js
+- name: github.com/jtolds/gls
+  version: bb0351aa7eb6f322f32667d51375f26a2bca6628
+- name: github.com/smartystreets/assertions
+  version: c9ee7d9e9a2aeec0bee7c4a516f3e0ad7cb7e558
+  subpackages:
+  - internal/go-render/render
+  - internal/oglematchers
+- name: github.com/smartystreets/goconvey
+  version: d4c757aa9afd1e2fc1832aaab209b5794eb336e1
+  subpackages:
+  - convey
+  - convey/gotest
+  - convey/reporting

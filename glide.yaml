@@ -1,0 +1,17 @@
+package: bitbucket.org/fseros/sinker_registry_api
+import:
+- package: github.com/Sirupsen/logrus
+  version: ~0.11.5
+- package: github.com/asaskevich/govalidator
+  version: ~6.0.0
+- package: github.com/astaxie/beego
+  version: ~1.8.2
+  subpackages:
+  - orm
+- package: github.com/mattn/go-sqlite3
+  version: ~1.2.0
+testImport:
+- package: github.com/smartystreets/goconvey
+  version: ~1.6.2
+  subpackages:
+  - convey

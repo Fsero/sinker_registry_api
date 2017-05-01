@@ -27,4 +27,11 @@ func init() {
 			AllowHTTPMethods: []string{"get"},
 			Params: nil})
 
+	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
+		beego.ControllerComments{
+			Method: "GetByIP",
+			Router: `/ip/:ip`,
+			AllowHTTPMethods: []string{"get"},
+			Params: nil})
+
 }
