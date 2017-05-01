@@ -1,29 +1,32 @@
 package models
 
 import (
-	"bytes"
 	"crypto/sha512"
-	"encoding/binary"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/astaxie/beego/orm"
-
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // Model Struct
 type Probe struct {
-	ProbeId       string `orm:"pk"`
-	FQDN          string `orm:"size(100)"`
-	Ipv4          string
-	Ipv6          string
-	Provider      string `orm:"size(100)"`
-	GeoLongitude  float64
-	GeoLatitude   float64
-	SshPrivateKey string
-	SshPublicKey  string
-	Enabled       bool
+	ProbeID       string    `orm:"pk" json:"ProbeID"`
+	FQDN          string    `orm:"size(100)" json:"fqdn"`
+	Ipv4          string    `json:"ipv4"`
+	Ipv6          string    `json:"ipv6"`
+	Provider      string    `orm:"size(100)" json:"provider"`
+	GeoLongitude  float64   `json:"geolongitude"`
+	GeoLatitude   float64   `json:"geolatitude"`
+	SshPrivateKey string    `json:"sshprivatekey"`
+	SshPublicKey  string    `json:"sshpublickey"`
+	Enabled       bool      `json:"enabled"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 var o orm.Ormer
@@ -32,40 +35,52 @@ func init() {
 	orm.RegisterModel(new(Probe))
 	orm.RegisterDataBase("default", "sqlite3", "data.db")
 	o = orm.NewOrm()
-	err := orm.RunSyncdb("default", true, true)
+	forced, verbose := true, true
+	err := orm.RunSyncdb("default", forced, verbose)
 	if err != nil {
 		log.Error(err)
 	}
 }
 
-func getHash(probe Probe) string {
-
-	var bin_buf bytes.Buffer
-	binary.Write(&bin_buf, binary.BigEndian, probe)
-	hash := fmt.Sprintf("%x", sha512.Sum512_224(bin_buf.Bytes()))
-	return hash
+func toHash(probe Probe) (hashID string) {
+	out, err := json.Marshal(probe)
+	if err == nil {
+		log.Infof("%s", out)
+	} else {
+		log.Warningf("Json marshall failed %s", err)
+	}
+	sum := sha512.Sum512_224(out)
+	log.Infof("Sum %v", sum)
+	strsum := fmt.Sprintf("%s", sum)
+	hash := base64.StdEncoding.EncodeToString([]byte(strsum))
+	hashID = fmt.Sprintf("%s", hash)
+	return hashID
 }
 
-func AddOne(probe Probe) (ProbeId string) {
-	hash := getHash(probe)
-	probe.ProbeId = hash
+// TODO: probe fields should be validated
+func AddOne(probe Probe) (ProbeID string) {
+
+	hashID := toHash(probe)
+	probe.ProbeID = hashID
+	probe.CreatedAt = time.Now()
+	probe.UpdatedAt = time.Now()
 	_, err := o.Insert(&probe)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return probe.ProbeId
+	return probe.ProbeID
 }
 
-func GetOne(ProbeId string) (probe *Probe, err error) {
-	var id string = ProbeId
-	pr := Probe{ProbeId: id}
+func GetOne(ProbeID string) (probe *Probe, err error) {
+	var id string = ProbeID
+	pr := Probe{ProbeID: id}
 	err = o.Read(&pr)
 	if err == orm.ErrNoRows {
-		log.Fatalf("No result found for id %s", ProbeId)
-		return nil, errors.New("ProbeId not found")
+		log.Warningf("No result found for id %s", ProbeID)
+		return nil, errors.New("ProbeID not found")
 	} else if err == orm.ErrMissPK {
-		log.Fatalf("No primary key found for id %s.", ProbeId)
-		return nil, errors.New("ProbeId not found")
+		log.Warningf("No primary key found for id %s.", ProbeID)
+		return nil, errors.New("ProbeID not found")
 	} else {
 		log.Debugf("%v", probe)
 		return &pr, nil
@@ -80,10 +95,10 @@ func GetAll() []*Probe {
 	return probes
 }
 
-func Update(ProbeId string, Score int64) (err error) {
-	return errors.New("ProbeId Not Exist")
+func Update(ProbeID string, Score int64) (err error) {
+	return errors.New("ProbeID Not Exist")
 }
 
-func Delete(ProbeId string) {
+func Delete(ProbeID string) {
 	return
 }

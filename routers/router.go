@@ -1,3 +1,7 @@
+// @APIVersion 1.0.0
+// @Title probe API
+// @Description A simple probe registry API
+// @Contact fsero
 package routers
 
 import (
