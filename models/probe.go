@@ -9,7 +9,6 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/abh/geoip"
 	"github.com/asaskevich/govalidator"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/mattn/go-sqlite3"
@@ -23,6 +22,7 @@ const (
 	AWS
 	GOOGLECLOUD
 	LINODE
+	HETZNER
 	ERROR
 )
 
@@ -32,6 +32,7 @@ var providers = map[string]Provider{
 	"AWS":           AWS,
 	"Google Cloud":  GOOGLECLOUD,
 	"Linode":        LINODE,
+	"Hetzner":       HETZNER,
 	"Bad Provider":  ERROR,
 }
 
@@ -42,16 +43,6 @@ func (p Provider) String() string {
 		}
 	}
 	return ""
-}
-
-func initializeGeoIP() *geoip.GeoIP {
-	file := "/usr/share/GeoIP/GeoIPCity.dat"
-
-	gi, err := geoip.Open(file)
-	if err != nil {
-		fmt.Printf("Could not open GeoIP database\n")
-	}
-	return gi
 }
 
 func ParseProvider(descr string) (Provider, bool) {
@@ -78,19 +69,9 @@ type Probe struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-var o orm.Ormer
-var gip *geoip.GeoIP
-
-func init() {
-	orm.RegisterModel(new(Probe))
-	orm.RegisterDataBase("default", "sqlite3", "data.db")
-	o = orm.NewOrm()
-	forced, verbose := false, true
-	err := orm.RunSyncdb("default", forced, verbose)
-	if err != nil {
-		log.Error(err)
-	}
-	gip = initializeGeoIP()
+type ProbeSSHKeys struct {
+	Private string `json:"SSHPrivateKey"`
+	Public  string `json:"SSHPublicKey"`
 }
 
 func toHash(probe Probe) (hashID string) {
@@ -103,7 +84,7 @@ func toHash(probe Probe) (hashID string) {
 	sum := sha512.Sum512_224(out)
 	log.Infof("Sum %v", sum)
 	strsum := fmt.Sprintf("%s", sum)
-	hash := base64.StdEncoding.EncodeToString([]byte(strsum))
+	hash := base64.URLEncoding.EncodeToString([]byte(strsum))
 	hashID = fmt.Sprintf("%s", hash)
 	return hashID
 }
@@ -130,6 +111,23 @@ func Validate(probe Probe) (bool, error) {
 		return false, fmt.Errorf("invalid latitude `%s`", probe.GeoLatitude)
 	}
 
+	probes, err := GetByFQDN(probe.FQDN)
+	log.Debugf("[models.probe.addOne]: number of probes %s found by FQDN", len(probes))
+
+	if err == nil && len(probes) >= 1 {
+		return false, fmt.Errorf("FQDN name already registered %s", probe.FQDN)
+	} else if err != nil {
+		log.Errorf("[models.probe.addOne]: Error querying database %s", err)
+	}
+	probes, err = GetByIPv4(probe.Ipv4)
+	log.Debugf("[models.probe.addOne]: number of probes %s found by IP", len(probes))
+
+	if err == nil && len(probes) >= 1 {
+		return false, fmt.Errorf("IPv4 address already registered %s", probe.Ipv4)
+	} else if err != nil {
+		log.Errorf("[models.probe.addOne]: Error querying database %s", err)
+	}
+
 	return true, nil
 
 }
@@ -149,7 +147,6 @@ func (probe *Probe) SetDefaults() {
 
 }
 
-// TODO: probe fields should be validated
 func AddOne(probe Probe) (ProbeID string, err error) {
 
 	hashID := toHash(probe)
@@ -161,6 +158,7 @@ func AddOne(probe Probe) (ProbeID string, err error) {
 	if !ok {
 		return "", err
 	}
+
 	record := gip.GetRecord(probe.Ipv4)
 	if record != nil {
 		probe.GeoLatitude = fmt.Sprintf("%f", record.Latitude)
@@ -181,18 +179,18 @@ func AddOne(probe Probe) (ProbeID string, err error) {
 	return probe.ProbeID, nil
 }
 
-func GetOne(ProbeID string) (probe *Probe, err error) {
+func GetByID(ProbeID string) (probe *Probe, err error) {
 	var id = ProbeID
 	pr := Probe{ProbeID: id}
 	err = o.Read(&pr)
 	if err == orm.ErrNoRows {
-		log.Warningf("No result found for id %s", ProbeID)
+		log.Warningf("[models.probe.GetByID]: No result found for id %s", ProbeID)
 		return nil, errors.New("ProbeID not found")
 	} else if err == orm.ErrMissPK {
-		log.Warningf("No primary key found for id %s.", ProbeID)
+		log.Warningf("[models.probe.GetByID]: No primary key found for id %s.", ProbeID)
 		return nil, errors.New("ProbeID not found")
 	} else {
-		log.Debugf("%v", probe)
+		log.Debugf("[models.probe.GetByID]: %v", probe)
 		return &pr, nil
 	}
 
@@ -201,26 +199,126 @@ func GetOne(ProbeID string) (probe *Probe, err error) {
 func GetByIPv4(ProbeIP string) ([]Probe, error) {
 	var ip = ProbeIP
 	var probes []Probe
-	num, err := o.Raw("SELECT * FROM probe where ipv4 = ?", ip).QueryRows(&probes)
+
+	if !govalidator.IsIPv4(ip) {
+		return probes, fmt.Errorf("Invalid IPv4 address provided %s", ip)
+	}
+	num, err := o.QueryTable("probe").Filter("enabled", true).Filter("Ipv4", ip).All(&probes)
+	//num, err := o.Raw("SELECT * FROM probe where enabled = 1 and ipv4 = ?", ip).QueryRows(&probes)
 	if err == nil {
 		fmt.Println("nums: ", num)
 	}
-
 	return probes, err
+}
 
+func GetByFQDN(fqdn string) ([]Probe, error) {
+	var probes []Probe
+	if !govalidator.IsDNSName(fqdn) {
+		return probes, fmt.Errorf("Invalid DNS name provided %s", fqdn)
+	}
+	num, err := o.QueryTable("probe").Filter("enabled", true).Filter("FQDN", fqdn).All(&probes)
+	//num, err := o.Raw("SELECT * FROM probe where enabled = 1 and f_q_d_n = ?", fqdn).QueryRows(&probes)
+	if err == nil {
+		fmt.Println("nums: ", num)
+	}
+	return probes, err
 }
 
 func GetAll() []*Probe {
 	var probes []*Probe
-	num, err := o.QueryTable("probe").All(&probes)
-	log.Debugf("Returned Rows Num: %s, %s", num, err)
+	num, err := o.QueryTable("probe").Filter("enabled", true).All(&probes)
+	log.Debugf("[models.probe.GetAll]: Returned Rows Num: %s, %s", num, err)
 	return probes
 }
 
+func Disable(ProbeID string) (*Probe, error) {
+	log.Infof("[model.probe.Disable]: disabling probe %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	if err == nil {
+		probe.Enabled = false
+		probe.UpdatedAt = time.Now()
+		_, err := o.Update(probe)
+		if err != nil {
+			return nil, err
+		}
+		return probe, nil
+	}
+	return nil, err
+}
+
+func Enable(ProbeID string) (*Probe, error) {
+	log.Infof("[model.probe.Enable]: enabling probe %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	if err == nil {
+		probe.Enabled = true
+		probe.UpdatedAt = time.Now()
+		_, err := o.Update(probe)
+		if err != nil {
+			return nil, err
+		}
+		return probe, nil
+	}
+	return nil, err
+
+}
 func Update(ProbeID string, Score int64) (err error) {
 	return errors.New("ProbeID Not Exist")
 }
 
-func Delete(ProbeID string) {
-	return
+func UploadSSH(ProbeID string, SSHPrivateKey string, SSHPublicKey string) (*Probe, error) {
+	log.Infof("[model.probe.UploadSSH]: Uploading SSH %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	if err == nil {
+		probe.SSHPrivateKey = SSHPrivateKey
+		probe.SSHPublicKey = SSHPublicKey
+		probe.UpdatedAt = time.Now()
+		_, err = o.Update(probe)
+		if err != nil {
+			return nil, err
+		}
+		return probe, nil
+	}
+	return nil, err
+}
+
+func GetSSH(ProbeID string) (*ProbeSSHKeys, error) {
+	log.Infof("[model.probe.GetSSH]: Getting SSH keys %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	keys := ProbeSSHKeys{Public: probe.SSHPublicKey, Private: probe.SSHPrivateKey}
+
+	if err != nil {
+		return nil, err
+	}
+	if keys.Private == "" || keys.Public == "" {
+		return nil, fmt.Errorf("partial ssh content, unable to get ssh keys base64 encoded from '%s' '%s'", probe.SSHPublicKey, probe.SSHPrivateKey)
+	}
+	if !govalidator.IsBase64(keys.Public) || !govalidator.IsBase64(keys.Private) {
+		return nil, fmt.Errorf("Invalid format for ssh keys, expect base64 encoding ones '%s' '%s'", keys.Public, keys.Private)
+	}
+	decodedPrivate, errPrivate := base64.URLEncoding.DecodeString(probe.SSHPrivateKey)
+	if errPrivate != nil {
+		return nil, errPrivate
+	}
+	decodedPublic, errPublic := base64.URLEncoding.DecodeString(probe.SSHPublicKey)
+	if errPublic != nil {
+		return nil, errPublic
+	}
+	keys.Private = fmt.Sprintf("%s", decodedPrivate)
+	keys.Public = fmt.Sprintf("%s", decodedPublic)
+	return &keys, nil
+}
+
+func Delete(ProbeID string) (bool, error) {
+	log.Infof("[model.probe.Delete]: removing probe %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	if err == nil {
+		probe.Enabled = true
+		probe.UpdatedAt = time.Now()
+		_, err = o.Delete(probe)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	return false, err
 }
