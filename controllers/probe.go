@@ -141,6 +141,27 @@ func (p *ProbeController) Enable() {
 	p.ServeJSON()
 }
 
+// @Title Updates traces path
+// @Description updates traces path
+// @Success 200 {object} models.Probe
+// @Param  tracespath  body string false "traces path for probe"
+// @router /tracespath/?:id [put]
+func (p *ProbeController) UpdateTracesPath() {
+	ProbeID := getIDbyQueryParamOrAsAParam(p)
+	if ProbeID != "" {
+		log.Infof("[controllers.probe.UpdateTracesPath]: updating traces path for probe %s", ProbeID)
+		var pr models.Probe
+		json.Unmarshal(p.Ctx.Input.RequestBody, &pr)
+		ob, err := models.UpdateTracesPath(ProbeID, pr.TracesPath)
+		if err != nil {
+			p.Data["json"] = fmt.Sprintf("{ 'msg': '%s' }", err.Error())
+		} else {
+			p.Data["json"] = ob
+		}
+	}
+	p.ServeJSON()
+}
+
 // @Title Updates ssh key
 // @Description updates ssh key
 // @Success 200 {object} models.Probe

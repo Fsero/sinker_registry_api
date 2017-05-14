@@ -62,8 +62,9 @@ type Probe struct {
 	GeoLongitude  string    `json:"geolongitude"`
 	GeoLatitude   string    `json:"geolatitude"`
 	Country       string    `json:"country"`
-	SSHPrivateKey string    `json:"SSHPrivateKey"`
-	SSHPublicKey  string    `json:"SSHPublicKey"`
+	SSHPrivateKey string    `json:"sshprivateKey"`
+	SSHPublicKey  string    `json:"sshpublicKey"`
+	TracesPath    string    `json:"tracespath"`
 	Enabled       bool      `json:"enabled"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
@@ -142,6 +143,7 @@ func (probe *Probe) SetDefaults() {
 	probe.Provider = ""
 	probe.SSHPrivateKey = ""
 	probe.SSHPublicKey = ""
+	probe.TracesPath = "/var/log/traces"
 	probe.CreatedAt = time.Now()
 	probe.UpdatedAt = time.Now()
 
@@ -271,6 +273,25 @@ func UploadSSH(ProbeID string, SSHPrivateKey string, SSHPublicKey string) (*Prob
 	if err == nil {
 		probe.SSHPrivateKey = SSHPrivateKey
 		probe.SSHPublicKey = SSHPublicKey
+		probe.UpdatedAt = time.Now()
+		_, err = o.Update(probe)
+		if err != nil {
+			return nil, err
+		}
+		return probe, nil
+	}
+	return nil, err
+}
+
+func UpdateTracesPath(ProbeID string, traces_path string) (*Probe, error) {
+	log.Infof("[model.probe.UpdateTracesPath]: updating traces path %s", ProbeID)
+	probe, err := GetByID(ProbeID)
+	if ok, _ := govalidator.IsFilePath(traces_path); !ok {
+		return nil, fmt.Errorf("Invalid path for traces '%s'", traces_path)
+	}
+
+	if err == nil {
+		probe.TracesPath = traces_path
 		probe.UpdatedAt = time.Now()
 		_, err = o.Update(probe)
 		if err != nil {

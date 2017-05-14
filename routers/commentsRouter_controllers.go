@@ -50,6 +50,13 @@ func init() {
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
 		beego.ControllerComments{
+			Method: "UpdateTracesPath",
+			Router: `/tracespath/?:id`,
+			AllowHTTPMethods: []string{"put"},
+			Params: nil})
+
+	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
+		beego.ControllerComments{
 			Method: "UploadSSH",
 			Router: `/ssh/?:id`,
 			AllowHTTPMethods: []string{"put"},
