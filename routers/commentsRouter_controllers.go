@@ -2,6 +2,7 @@ package routers
 
 import (
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/context/param"
 )
 
 func init() {
@@ -11,6 +12,7 @@ func init() {
 			Method: "Post",
 			Router: `/`,
 			AllowHTTPMethods: []string{"post"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -18,6 +20,7 @@ func init() {
 			Method: "Get",
 			Router: `/:id`,
 			AllowHTTPMethods: []string{"get"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -25,6 +28,7 @@ func init() {
 			Method: "GetAll",
 			Router: `/`,
 			AllowHTTPMethods: []string{"get"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -32,6 +36,7 @@ func init() {
 			Method: "GetByIP",
 			Router: `/ip/:ip`,
 			AllowHTTPMethods: []string{"get"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -39,6 +44,7 @@ func init() {
 			Method: "Disable",
 			Router: `/disable/?:id`,
 			AllowHTTPMethods: []string{"put"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -46,6 +52,7 @@ func init() {
 			Method: "Enable",
 			Router: `/enable/?:id`,
 			AllowHTTPMethods: []string{"put"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -53,6 +60,7 @@ func init() {
 			Method: "UpdateTracesPath",
 			Router: `/tracespath/?:id`,
 			AllowHTTPMethods: []string{"put"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -60,6 +68,7 @@ func init() {
 			Method: "UploadSSH",
 			Router: `/ssh/?:id`,
 			AllowHTTPMethods: []string{"put"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
@@ -67,13 +76,15 @@ func init() {
 			Method: "GetSSH",
 			Router: `/ssh/?:id`,
 			AllowHTTPMethods: []string{"get"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
 		beego.ControllerComments{
 			Method: "Delete",
 			Router: `/delete/?:id`,
-			AllowHTTPMethods: []string{"put"},
+			AllowHTTPMethods: []string{"delete"},
+			MethodParams: param.Make(),
 			Params: nil})
 
 }

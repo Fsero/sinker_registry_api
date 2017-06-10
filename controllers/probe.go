@@ -224,7 +224,7 @@ func (p *ProbeController) Put() {
 	p.ServeJSON()
 }
 
-// @router /delete/?:id [put]
+// @router /delete/?:id [delete]
 func (p *ProbeController) Delete() {
 	ProbeID := getIDbyQueryParamOrAsAParam(p)
 	if ProbeID != "" {
