@@ -1,13 +1,16 @@
 hash: a9f32d1a0b8ed7f3b79492ab88c7b98ecdf576aab21b560e8ddf1835710a58c6
-updated: 2017-05-01T17:27:12.10578055+02:00
+updated: 2017-06-10T22:18:59.42656661+02:00
 imports:
+- name: github.com/abh/geoip
+  version: 07cea4480daa3f28edd2856f2a0490fbe83842eb
 - name: github.com/asaskevich/govalidator
   version: 4918b99a7cb949bb295f3c7bbaf24b577d806e35
 - name: github.com/astaxie/beego
-  version: 7452151beec2f43c42122fd91b7523bcbccf05be
+  version: cab8458c1c4a5a3b4bf5192922be620e6dede15b
   subpackages:
   - config
   - context
+  - context/param
   - grace
   - logs
   - orm
