@@ -271,10 +271,16 @@ func UploadSSH(ProbeID string, SSHPrivateKey string, SSHPublicKey string) (*Prob
 	log.Infof("[model.probe.UploadSSH]: Uploading SSH %s", ProbeID)
 	probe, err := GetByID(ProbeID)
 	if err == nil {
+		if !(govalidator.IsBase64(SSHPrivateKey) && govalidator.IsBase64(SSHPublicKey)) {
+			log.Infof("[model.probe.UploadSSH] malformed base64 ssh key %s %s", SSHPrivateKey, SSHPublicKey)
+			return nil, errors.New("Malformed base64 in SSH Keys")
+		}
+
 		probe.SSHPrivateKey = SSHPrivateKey
 		probe.SSHPublicKey = SSHPublicKey
 		probe.UpdatedAt = time.Now()
 		_, err = o.Update(probe)
+		log.Infof("[model.probe.UploadSSH]: Saving new key for probe %s", ProbeID)
 		if err != nil {
 			return nil, err
 		}

@@ -11,7 +11,7 @@ import (
 
 func init() {
 	orm.RegisterModel(new(Probe))
-	orm.RegisterDataBase("default", "sqlite3", "data.db")
+	orm.RegisterDataBase("default", "sqlite3", "/etc/sinker_registry_api/data.db")
 	o = orm.NewOrm()
 	forced, verbose := false, true
 	err := orm.RunSyncdb("default", forced, verbose)
