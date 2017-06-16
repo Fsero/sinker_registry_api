@@ -78,12 +78,12 @@ type ProbeSSHKeys struct {
 func toHash(probe Probe) (hashID string) {
 	out, err := json.Marshal(probe)
 	if err == nil {
-		log.Infof("%s", out)
+		log.Debugf("%s", out)
 	} else {
 		log.Warningf("Json marshall failed %s", err)
 	}
 	sum := sha512.Sum512_224(out)
-	log.Infof("Sum %v", sum)
+	log.Debugf("[models.toHash] checksum %s", sum)
 	strsum := fmt.Sprintf("%s", sum)
 	hash := base64.URLEncoding.EncodeToString([]byte(strsum))
 	hashID = fmt.Sprintf("%s", hash)
@@ -156,6 +156,7 @@ func AddOne(probe Probe) (ProbeID string, err error) {
 	probe.CreatedAt = time.Now()
 	probe.UpdatedAt = time.Now()
 
+	log.Infof("[models.AddOne] new probe %+v", probe)
 	ok, err := Validate(probe)
 	if !ok {
 		return "", err
@@ -168,7 +169,6 @@ func AddOne(probe Probe) (ProbeID string, err error) {
 		probe.Country = record.CountryName
 	}
 
-	fmt.Printf("%+v", record)
 	ok, err = Validate(probe)
 	if !ok {
 		return "", err
