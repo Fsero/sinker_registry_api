@@ -68,6 +68,7 @@ type Probe struct {
 	Enabled       bool      `json:"enabled"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	DisabledAt    time.Time `json:"disabled_at"`
 }
 
 type ProbeSSHKeys struct {
@@ -146,6 +147,7 @@ func (probe *Probe) SetDefaults() {
 	probe.TracesPath = "/var/log/traces"
 	probe.CreatedAt = time.Now()
 	probe.UpdatedAt = time.Now()
+	probe.DisabledAt = time.Time{}
 
 }
 
@@ -155,6 +157,7 @@ func AddOne(probe Probe) (ProbeID string, err error) {
 	probe.ProbeID = hashID
 	probe.CreatedAt = time.Now()
 	probe.UpdatedAt = time.Now()
+	probe.DisabledAt = time.Time{}
 
 	log.Infof("[models.AddOne] new probe %+v", probe)
 	ok, err := Validate(probe)
@@ -239,6 +242,7 @@ func Disable(ProbeID string) (*Probe, error) {
 	if err == nil {
 		probe.Enabled = false
 		probe.UpdatedAt = time.Now()
+		probe.DisabledAt = time.Now()
 		_, err := o.Update(probe)
 		if err != nil {
 			return nil, err
@@ -254,6 +258,7 @@ func Enable(ProbeID string) (*Probe, error) {
 	if err == nil {
 		probe.Enabled = true
 		probe.UpdatedAt = time.Now()
+		probe.DisabledAt = time.Time{}
 		_, err := o.Update(probe)
 		if err != nil {
 			return nil, err

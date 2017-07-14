@@ -101,6 +101,33 @@ func (p *ProbeController) GetByIP() {
 	}
 }
 
+// @router /name/:fqdn [get]
+func (p *ProbeController) GetByFQDN() {
+	probeName := p.Ctx.Input.Param(":fqdn")
+	fmt.Printf("Looking for probes with name %s", probeName)
+	if probeName != "" {
+		obs, err := models.GetByFQDN(probeName)
+		if err == nil {
+			fmt.Printf("Found \n %+v", obs)
+			newobs := make([]models.Probe, 0)
+			for _, ob := range obs {
+				if ob.Enabled {
+					newobs = append(newobs, ob)
+				}
+			}
+			fmt.Printf("Found newobs \n %+v", newobs)
+			p.Data["json"] = newobs
+			p.Ctx.Output.SetStatus(200)
+			p.ServeJSON()
+		} else {
+			p.Data["json"] = fmt.Sprintf("{ 'msg': '%s' }", err.Error())
+			p.Ctx.Output.SetStatus(500)
+			p.ServeJSON()
+			p.StopRun()
+		}
+	}
+}
+
 // @router /disable/?:id [put]
 func (p *ProbeController) Disable() {
 	ProbeID := getIDbyQueryParamOrAsAParam(p)
