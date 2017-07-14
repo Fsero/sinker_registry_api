@@ -41,6 +41,14 @@ func init() {
 
 	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
 		beego.ControllerComments{
+			Method: "GetByFQDN",
+			Router: `/name/:fqdn`,
+			AllowHTTPMethods: []string{"get"},
+			MethodParams: param.Make(),
+			Params: nil})
+
+	beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"] = append(beego.GlobalControllerRouter["bitbucket.org/fseros/sinker_registry_api/controllers:ProbeController"],
+		beego.ControllerComments{
 			Method: "Disable",
 			Router: `/disable/?:id`,
 			AllowHTTPMethods: []string{"put"},

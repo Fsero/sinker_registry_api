@@ -68,7 +68,7 @@ type Probe struct {
 	Enabled       bool      `json:"enabled"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
-	DisabledAt    time.Time `json:"disabled_at"`
+	DisabledAt    time.Time `orm:"null" json:"disabled_at"`
 }
 
 type ProbeSSHKeys struct {
