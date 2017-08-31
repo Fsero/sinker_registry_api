@@ -211,7 +211,7 @@ func (p *ProbeController) UploadSSH() {
 	p.ServeJSON()
 }
 
-// @Title Updates ssh key
+// @Title Gets ssh key
 // @Description updates ssh key
 // @Success 200 {object} models.Probe
 // @Param  sshprivatekey  body string false "ssh private key of the probe"
